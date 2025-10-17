@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NP’s FERTILIZERS - Order Form</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f7f6; color: #333; }
+    header { background: #4CAF50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 800px; margin: auto; padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    button { cursor: pointer; border: none; border-radius: 4px; padding: 10px; }
+    button.primary { background: #4CAF50; color: white; }
+    .hidden { display: none; }
+    .product { border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .product button { background: #4CAF50; color: white; } /* Green order button */
+    #order-form-card { display: none; }
+    #order-message { color: green; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>NP’s FERTILIZERS</h1>
+  </header>
+
+  <div class="container">
+    <div id="product-list" class="card">
+      <h2>Our Products</h2>
+      <div class="product">
+        <div>
+          <h3>DAP (18-46-0)</h3>
+          <p>Price: ₹1900.50</p>
+          <p>Availability: In Stock</p>
+        </div>
+        <button class="order-btn" data-product="DAP (18-46-0)" data-price="1900.50">Order Now</button>
+      </div>
+      <div class="product">
+        <div>
+          <h3>Urea (46% N)</h3>
+          <p>Price: ₹1200.00</p>
+          <p>Availability: In Stock</p>
+        </div>
+        <button class="order-btn" data-product="Urea (46% N)" data-price="1200.00">Order Now</button>
+      </div>
+      <div class="product">
+        <div>
+          <h3>MOP (Potash)</h3>
+          <p>Price: ₹1500.00</p>
+          <p>Availability: In Stock</p>
+        </div>
+        <button class="order-btn" data-product="MOP (Potash)" data-price="1500.00">Order Now</button>
+      </div>
+    </div>
+
+    <div id="order-form-card" class="card">
+      <h2>Place Your Order</h2>
+      <form id="order-form">
+        <input type="hidden" id="product-name" />
+        <input type="hidden" id="product-price" />
+        <div>
+          <label for="name">Name:</label><br />
+          <input type="text" id="name" required />
+        </div>
+        <div>
+          <label for="mobile">Mobile Number:</label><br />
+          <input type="text" id="mobile" required />
+        </div>
+        <div>
+          <label for="email">Email:</label><br />
+          <input type="email" id="email" required />
+        </div>
+        <div>
+          <label for="address">Address:</label><br />
+          <textarea id="address" required></textarea>
+        </div>
+        <div>
+          <label for="quantity">Quantity:</label><br />
+          <input type="number" id="quantity" min="1" required />
+        </div>
+        <button type="submit" class="primary">Place Order</button>
+      </form>
+      <p id="order-message" class="hidden">Order placed successfully!</p>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeOSuXZzERDV3rQi2bQl4GW4Jt5yPFGnA",
+      authDomain: "fertilizer-f4a04.firebaseapp.com",
+      projectId: "fertilizer-f4a04",
+      storageBucket: "fertilizer-f4a04.appspot.com",
+      messagingSenderId: "510585038239",
+      appId: "1:510585038239:web:ccd78f656fe26e358bc9aa"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const orderFormCard = document.getElementById("order-form-card");
+    const orderForm = document.getElementById("order-form");
+    const orderMessage = document.getElementById("order-message");
+    const productList = document.getElementById("product-list");
+
+    productList.addEventListener("click", (e) => {
+      if (e.target.classList.contains("order-btn")) {
+        const product = e.target.getAttribute("data-product");
+        const price = parseFloat(e.target.getAttribute("data-price"));
+        document.getElementById("product-name").value = product;
+        document.getElementById("product-price").value = price;
+        orderFormCard.style.display = "block";
+        orderFormCard.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+
+    orderForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      orderMessage.classList.add("hidden");
+
+      const name = document.getElementById("name").value;
+      const mobile = document.getElementById("mobile").value;
+      const email = document.getElementById("email").value;
+      const address = document.getElementById("address").value;
+      const quantity = parseInt(document.getElementById("quantity").value);
+      const productName = document.getElementById("product-name").value;
+      const productPrice = parseFloat(document.getElementById("product-price").value);
+
+      try {
+        await db.collection("orders").add({
+          name,
+          mobile,
+          email,
+          address,
+          product: productName,
+          price: productPrice,
+          quantity,
+          totalAmount: productPrice * quantity,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        orderMessage.textContent = "Order placed successfully!";
+        orderMessage.classList.remove("hidden");
+        orderForm.reset();
+        orderFormCard.style.display = "none";
+      } catch (err) {
+        console.error("Order error:", err);
+        alert("Failed to place order.");
+      }
+    });
+  </script>
+</body>
+</html>
